@@ -19,7 +19,14 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
+import Database from '@ioc:Adonis/Lucid/Database'
 
 Route.get('/', async ({ view }) => {
   return view.render('welcome')
+})
+
+Route.post("/data", async ()=>{
+  let data = await Database.from("todo_blanks").select('*')
+  console.log(data);
+  
 })
