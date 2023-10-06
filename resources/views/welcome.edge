@@ -6,34 +6,38 @@
   <title>AdonisJS - A fully featured web framework for Node.js</title>
   <link rel="stylesheet" type="text/css" href="{{ asset('assets/app.css') }}"> 
 </head>
-<body>
-  <h1>Todo List</h1>
-    <article>
-      <input type="text" name="todoToAddTitle"> 
-      <input type="text" name="todoToAddDesc"> 
-      <input type="submit" value="Ajouter un todo +" onclick="addTodos()">
+<body class="h-screen w-screen flex justify-center items-center">
+  <main class="w-1/2 h-3/4 bg-slate-600 text-center p-5 rounded-md flex flex-col gap-5 min-w-[500px]">
+    <h1 class="text-3xl text-slate-100">Todo List</h1>
+    <p id="erroreMessage"></p>
+    <article class="grid grid-cols-2 w-full place-items-stretch gap-x-10 gap-y-2.5">
+      <input type="text" name="todoToAddTitle" class="rounded-sm p-1 w-full" placeholder="Titre"> 
+      <input type="text" name="todoToAddDesc" class="rounded-sm p-1 w-full" placeholder="Description"> 
+      <input type="submit" value="Ajouter un todo +" onclick="addTodos()" class="p-1 bg-slate-400 text-slate-100 grid-">
     </article>
-  <article>
-    <aside data-done="false">
-      <ul>
-        {{--  Todo à faire  --}}
-        
-      </ul>
-    </aside>
-    <aside data-done="true">
-      <ul>
-        {{--  Todo fait  --}}
-      </ul>
-    </aside>
-  </article>
+    <article class="flex w-full justify-around gap-5 relative">
+      <aside data-done="false" class="w-full max-h-[50cqh] overflow-y-auto h-full">
+        <p class="text-slate-100">À faire</p>
+        <ul class="flex flex-col gap-4 relative w-full ">
+          {{--  Todo à faire  --}}
+        </ul>
+      </aside>
 
-  </main>
+      <aside data-done="true" class="w-full">
+        <p class="text-slate-100">Fait</p>
+        <ul class="flex flex-col gap-4 relative w-full">
+          {{--  Todo fait  --}}
+        </ul>
+      </aside>
+    </article>
+</main>
 
   <script>
     const todoTasksContainer = document.querySelector("aside[data-done = 'false'] ul")
     const doneTasksContainer = document.querySelector("aside[data-done = 'true'] ul")
     const todoToAddTitle = document.getElementsByName("todoToAddTitle")
     const todoToAddDesc = document.getElementsByName("todoToAddDesc")
+    const erroreMessage = document.getElementById("erroreMessage")
     
     fetchData()
     function fetchData (){
@@ -51,16 +55,22 @@
     
     function getTodos(todo){
       let element = document.createElement("li")
+      element.classList.add("bg-slate-400","rounded-sm","py-4", "relative","flex","flex-col","gap-2")
       let innerHTMLElement = `
-      <button onclick="deleteTodo(${todo.id})">x</button>
-      <h2> ${todo.title} </h2>
-      <p> ${todo.description} </p>
-      <input type='radio' name='status${todo.id}' data-status='0' ${todo.status===0 ? "checked" : "" }
+      <button class='absolute right-[5px] top-[5px] bg-slate-200 w-[25px] aspect-square rounded-sm' onclick="deleteTodo(${todo.id})">x</button>
+      <h2 class='text-slate-100'> ${todo.title} </h2>
+      <p class='text-slate-200'> ${todo.description} </p>
+      <div class='grid grid-cols-3'>
+        <input type='radio' name='status${todo.id}' data-status='0' ${todo.status===0 ? "checked" : "" }
         onChange="changeStatus(${todo.id},'${todo.title}','${todo.description}',${todo.status},this.dataset.status)" />
-      <input type='radio' name='status${todo.id}' data-status='1' ${todo.status===1 ? "checked" : "" }
+        <input type='radio' name='status${todo.id}' data-status='1' ${todo.status===1 ? "checked" : "" }
         onChange="changeStatus(${todo.id},'${todo.title}','${todo.description}',${todo.status},this.dataset.status)" />
-      <input type='radio' name='status${todo.id}' data-status='2' ${todo.status===2 ? "checked" : "" }
+        <input type='radio' name='status${todo.id}' data-status='2' ${todo.status===2 ? "checked" : "" }
         onChange="changeStatus(${todo.id},'${todo.title}','${todo.description}',${todo.status},this.dataset.status)" />
+        <label class='text-slate-100'>à faire</label>
+        <label class='text-slate-100'>en cours</label>
+        <label class='text-slate-100'>fait</label>
+      </div>
       `
     
       if(todo.status === 2 ){
@@ -101,11 +111,18 @@
           Accept: "application/json",
           "Content-Type": "application/json"
         },
-        body:JSON.stringify({title,desc})}).then(response=>{
-        response.status == 200 ? (doneTasksContainer.innerHTML ="",
-        todoTasksContainer.innerHTML ="",
-        fetchData()) : null
-      })
+        body:JSON.stringify({title,desc})}).then(resp=>resp.json()).then(response=>{
+          console.log(response);
+          response.message == null ? (
+            doneTasksContainer.innerHTML ="",
+            todoTasksContainer.innerHTML ="",
+            fetchData()
+          ):(
+            erroreMessage.innerHTML = response.message
+          )
+        })
+
+        
       }
     }
 
@@ -121,7 +138,6 @@
         todoTasksContainer.innerHTML ="",
         fetchData()) : null
       })
-
     }
   </script>
 </body>
