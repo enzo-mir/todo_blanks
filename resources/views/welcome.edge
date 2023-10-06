@@ -7,11 +7,122 @@
   <link rel="stylesheet" type="text/css" href="{{ asset('assets/app.css') }}"> 
 </head>
 <body>
+  <h1>Todo List</h1>
+    <article>
+      <input type="text" name="todoToAddTitle"> 
+      <input type="text" name="todoToAddDesc"> 
+      <input type="submit" value="Ajouter un todo +" onclick="addTodos()">
+    </article>
+  <article>
+    <aside data-done="false">
+      <ul>
+        {{--  Todo à faire  --}}
+        
+      </ul>
+    </aside>
+    <aside data-done="true">
+      <ul>
+        {{--  Todo fait  --}}
+      </ul>
+    </aside>
+  </article>
 
- 
+  </main>
 
   <script>
-    let data = fetch("/data",{method:"POST"}).then(res=>res.json())
+    const todoTasksContainer = document.querySelector("aside[data-done = 'false'] ul")
+    const doneTasksContainer = document.querySelector("aside[data-done = 'true'] ul")
+    const todoToAddTitle = document.getElementsByName("todoToAddTitle")
+    const todoToAddDesc = document.getElementsByName("todoToAddDesc")
+    
+    fetchData()
+    function fetchData (){
+      const todosData = fetch("/todos",{
+        method : "POST"
+      }).then(data=>data.json()).then(d=>d)
+      let responseData = todosData.then()
+    
+      responseData.then(function(todos) {
+        for (const todo of todos) {
+          getTodos(todo)
+        }
+      })
+    }
+    
+    function getTodos(todo){
+      let element = document.createElement("li")
+      let innerHTMLElement = `
+      <button onclick="deleteTodo(${todo.id})">x</button>
+      <h2> ${todo.title} </h2>
+      <p> ${todo.description} </p>
+      <input type='radio' name='status${todo.id}' data-status='0' ${todo.status===0 ? "checked" : "" }
+        onChange="changeStatus(${todo.id},'${todo.title}','${todo.description}',${todo.status},this.dataset.status)" />
+      <input type='radio' name='status${todo.id}' data-status='1' ${todo.status===1 ? "checked" : "" }
+        onChange="changeStatus(${todo.id},'${todo.title}','${todo.description}',${todo.status},this.dataset.status)" />
+      <input type='radio' name='status${todo.id}' data-status='2' ${todo.status===2 ? "checked" : "" }
+        onChange="changeStatus(${todo.id},'${todo.title}','${todo.description}',${todo.status},this.dataset.status)" />
+      `
+    
+      if(todo.status === 2 ){
+        let doneTask = doneTasksContainer.appendChild(element);
+        doneTask.innerHTML = innerHTMLElement
+      }else{
+        let todoTask = todoTasksContainer.appendChild(element);
+        todoTask.innerHTML = innerHTMLElement
+      }
+    }
+
+    function changeStatus(id,title,desc,status,currentStatus){
+      let data = {
+        id,title,desc,status
+      }
+
+      let changeStatusPost = fetch("/postStatus",{
+        method:"POST",
+        headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body:JSON.stringify({data,currentStatus})}).then(response=>{
+        response.status == 200 ? (doneTasksContainer.innerHTML ="",
+        todoTasksContainer.innerHTML ="",
+        fetchData()) : null
+      })
+    }
+
+    function addTodos() {
+      let title = todoToAddTitle[0].value
+      let desc = todoToAddDesc[0].value
+
+      if(title && desc) {
+        let addTodo = fetch("/addTodo",{
+        method:"POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body:JSON.stringify({title,desc})}).then(response=>{
+        response.status == 200 ? (doneTasksContainer.innerHTML ="",
+        todoTasksContainer.innerHTML ="",
+        fetchData()) : null
+      })
+      }
+    }
+
+    function deleteTodo(id) {
+      let deleteTodoPost = fetch("/deleteTodo",{
+        method:"POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body:JSON.stringify({id})}).then(response=>{
+        response.status == 200 ? (doneTasksContainer.innerHTML ="",
+        todoTasksContainer.innerHTML ="",
+        fetchData()) : null
+      })
+
+    }
   </script>
 </body>
 </html>

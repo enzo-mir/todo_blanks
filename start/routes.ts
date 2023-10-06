@@ -1,32 +1,56 @@
-/*
-|--------------------------------------------------------------------------
-| Routes
-|--------------------------------------------------------------------------
-|
-| This file is dedicated for defining HTTP routes. A single file is enough
-| for majority of projects, however you can define routes in different
-| files and just make sure to import them inside this file. For example
-|
-| Define routes in following two files
-| ├── start/routes/cart.ts
-| ├── start/routes/customer.ts
-|
-| and then import them inside `start/routes.ts` as follows
-|
-| import './routes/cart'
-| import './routes/customer''
-|
-*/
+import Route from "@ioc:Adonis/Core/Route";
+import Database from "@ioc:Adonis/Lucid/Database";
+interface Data {
+  id: number;
+  title: string;
+  desc: string;
+  status: string;
+}
 
-import Route from '@ioc:Adonis/Core/Route'
-import Database from '@ioc:Adonis/Lucid/Database'
+Route.get("/", async ({ view }) => {
+  return view.render("welcome");
+});
 
-Route.get('/', async ({ view }) => {
-  return view.render('welcome')
-})
+Route.post("/todos", async () => {
+  let data = await Database.from("todo_blanks").select("*");
+  return data;
+});
+Route.post("/postStatus", async (ctx) => {
+  let body = ctx.request.body();
+  let oldData: Data = body.data;
 
-Route.post("/data", async ()=>{
-  let data = await Database.from("todo_blanks").select('*')
-  console.log(data);
-  
-})
+  if (oldData.status == body.currentStatus) {
+    return ctx.response.status(201);
+  } else {
+    await Database.rawQuery(
+      `UPDATE todo_blanks SET status = ${body.currentStatus} WHERE id  = ${oldData.id}`
+    );
+    return ctx.response.status(200);
+  }
+});
+
+Route.post("/addTodo", async (ctx) => {
+  let body: Record<string, string> = ctx.request.body();
+
+  let insertionTodo = await Database.table("todo_blanks").insert({
+    title: body.title,
+    description: body.desc,
+    status: 0,
+  });
+
+  if (insertionTodo) {
+    ctx.response.status(200);
+  } else {
+    ctx.response.status(501);
+  }
+});
+Route.post("/deleteTodo", async (ctx) => {
+  let { id  } = ctx.request.body();
+  let deletePost = await Database.from("todo_blanks")
+    .delete("*")
+    .where("id", id);
+
+    if(deletePost) ctx.response.status(200)
+
+    
+});
